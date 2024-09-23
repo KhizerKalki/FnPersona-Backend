@@ -1,7 +1,7 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const sequelize = require('../database');
+const { DataTypes, Model } = require("sequelize");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const sequelize = require("../database");
 
 class User extends Model {
   async validPassword(password) {
@@ -9,40 +9,61 @@ class User extends Model {
   }
 
   generateJWT() {
-    return jwt.sign({ id: this.id, email: this.email }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    return jwt.sign(
+      { id: this.id, email: this.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
   }
 }
 
-User.init({
-  firstname: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  lastname: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true,
+User.init(
+  {
+    firstname: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    lastname: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      set(value) {
+        const hashedPassword = bcrypt.hashSync(value, 10);
+        this.setDataValue("password", hashedPassword);
+      },
+    },
+    dateOfBirth: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      validate: {
+        isDate: true,
+      },
+    },
+    timezone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      },
     },
   },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    set(value) {
-      const hashedPassword = bcrypt.hashSync(value, 10);
-      this.setDataValue('password', hashedPassword);
-    },
-  },
-}, {
-  sequelize,
-  modelName: 'User',
-});
+  {
+    sequelize,
+    modelName: "User",
+  }
+);
 
 module.exports = User;
